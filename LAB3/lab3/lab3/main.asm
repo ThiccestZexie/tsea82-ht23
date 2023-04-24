@@ -13,13 +13,15 @@
 ;
 ;	PB0 : pos A
 ;	PB1 : pos B
-; ---
+
+; --- DEF
+.def tmp=r16
 
 ; --- SRAM
 .dseg
 .org SRAM_START
-TIME: .byte 4 ; time in BCD-format
-POS: .byte 1 ; 7-seg position?
+TIME: .byte 4 ; time in BCD-format (BCD increments this)
+POS: .byte 1 ; which digit to display (MUX increments/reads this)
 
 ; --- CODE
 .cseg
@@ -38,22 +40,22 @@ SEGTAB:
 MAIN:
 MAIN_INIT:
 	; I/O init
-	ldi r16, $FF
-	out DDRA, r16 ; PORTB is where segments will be lit
-	ldi r16, $00
-	out DDRD, r16 ; PIND is where INT0 and INT1 will trigger from
+	ldi tmp, $FF
+	out DDRA, tmp ; PORTB is where segments will be lit
+	ldi tmp, $00
+	out DDRD, tmp ; PIND is where INT0 and INT1 will trigger from
 
 	; init SP
-	ldi r16,HIGH(RAMEND)
-	out SPH,r16
-	ldi r16,LOW(RAMEND)
-	out SPL,r16
+	ldi tmp,HIGH(RAMEND)
+	out SPH,tmp
+	ldi tmp,LOW(RAMEND)
+	out SPL,tmp
 	; should interrupt on rising edge (both ISC0 and ISC1)
-	ldi r16,(1<<ISC01)|(0<<ISC00)|(1<<ISC11)|(0<<ISC10)
-	out MCUCR,r16
+	ldi tmp,(1<<ISC01)|(0<<ISC00)|(1<<ISC11)|(0<<ISC10)
+	out MCUCR,tmp
 	; enable ISC01 and ISC1
-	ldi r16,(1<<INT1)|(1<<INT0)
-	out GICR,r16
+	ldi tmp,(1<<INT1)|(1<<INT0)
+	out GICR,tmp
 	; enable interrupts
 	sei
 MAIN_WAIT:
@@ -61,33 +63,42 @@ MAIN_WAIT:
 
 ; interrupt handlers
 MUX:
-	; save r16 and flags on stack
-	push r16
-	in r16, SREG
-	push r16
+MUX_INIT:
+	; save tmp and flags on stack
+	push tmp
+	in tmp, SREG
+	push tmp
 
-	; get current number
-	ldi r16, TIME
+MUX_LOOP:
+	; -- use POS to get current digit
+	; load X with TIME+POS
+	ld 
 
-	; convert it to hex segments
+	; current digit = ld X -> store in tmp for temp
 
-	; out on PORTA
+	; -- convert it to hex segments
+	; load Z with SEGTAB + tmp
+	; lpm tmp, Z
 
-	; inc POS
+	; out tmp on PORTA
 
-	; restore r16 and flags from stack
-	pop r16
-	out SREG, r16
-	pop r16
+	; incr POS
+
+MUX_EXIT:
+	; restore tmp and flags from stack
+	pop tmp
+	out SREG, tmp
+	pop tmp
 	reti
+
 BCD:
-	; save r16 and flags on stack
-	in r16, SREG
-	push r16
+	; save tmp and flags on stack
+	in tmp, SREG
+	push tmp
 	;.. do something els
 
-	; restore r16 and flags from stack
-	pop r16
-	out SREG, r16
-	pop r16
+	; restore tmp and flags from stack
+	pop tmp
+	out SREG, tmp
+	pop tmp
 	reti
