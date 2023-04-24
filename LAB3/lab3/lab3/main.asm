@@ -14,14 +14,20 @@
 ;	PB0 : pos A
 ;	PB1 : pos B
 
-; --- DEF
-.def tmp=r16
+; --- PREPROCESSING
+.def tmpL=r18
+.def tmpH=r19
 
 ; --- SRAM
 .dseg
 .org SRAM_START
 TIME: .byte 4 ; time in BCD-format (BCD increments this)
 POS: .byte 1 ; which digit to display (MUX increments/reads this)
+
+; --- TABLES
+SEGTAB: 
+	.db $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F
+
 
 ; --- CODE
 .cseg
@@ -33,29 +39,25 @@ jmp MUX ; INT0 interr.
 jmp BCD ; INT1 interr.
 .org INT_VECTORS_SIZE
 
-; --- TABLES
-SEGTAB: 
-	.db $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F
-
 MAIN:
 MAIN_INIT:
 	; I/O init
-	ldi tmp, $FF
-	out DDRA, tmp ; PORTB is where segments will be lit
-	ldi tmp, $00
-	out DDRD, tmp ; PIND is where INT0 and INT1 will trigger from
+	ldi tmpL, $FF
+	out DDRA, tmpL ; PORTB is where segments will be lit
+	ldi tmpL, $00
+	out DDRD, tmpL ; PIND is where INT0 and INT1 will trigger from
 
 	; init SP
-	ldi tmp,HIGH(RAMEND)
-	out SPH,tmp
-	ldi tmp,LOW(RAMEND)
-	out SPL,tmp
+	ldi tmpL,HIGH(RAMEND)
+	out SPH,tmpL
+	ldi tmpL,LOW(RAMEND)
+	out SPL,tmpL
 	; should interrupt on rising edge (both ISC0 and ISC1)
-	ldi tmp,(1<<ISC01)|(0<<ISC00)|(1<<ISC11)|(0<<ISC10)
-	out MCUCR,tmp
+	ldi tmpL,(1<<ISC01)|(0<<ISC00)|(1<<ISC11)|(0<<ISC10)
+	out MCUCR,tmpL
 	; enable ISC01 and ISC1
-	ldi tmp,(1<<INT1)|(1<<INT0)
-	out GICR,tmp
+	ldi tmpL,(1<<INT1)|(1<<INT0)
+	out GICR,tmpL
 	; enable interrupts
 	sei
 MAIN_WAIT:
@@ -64,41 +66,43 @@ MAIN_WAIT:
 ; interrupt handlers
 MUX:
 MUX_INIT:
-	; save tmp and flags on stack
-	push tmp
-	in tmp, SREG
-	push tmp
+	; save tmpL and flags on stack
+	push tmpL
+	push tmpH
+	in tmpL, SREG
+	push tmpL
 
 MUX_LOOP:
 	; -- use POS to get current digit
 	; load X with TIME+POS
-	ld 
+	ldi tmpL, LOW(TIME+POS*8) ;tmpL now contains current digit
 
-	; current digit = ld X -> store in tmp for temp
+	add tmpL, LOW(SEGTAB)
 
 	; -- convert it to hex segments
-	; load Z with SEGTAB + tmp
-	; lpm tmp, Z
+	; load Z with SEGTAB + tmpL
+	; lpm tmpL, Z
 
-	; out tmp on PORTA
+	; out tmpL on PORTA
 
 	; incr POS
 
 MUX_EXIT:
-	; restore tmp and flags from stack
-	pop tmp
-	out SREG, tmp
-	pop tmp
+	; restore tmpL and flags from stack
+	pop tmpL
+	out SREG, tmpL
+	pop tmpH
+	pop tmpL
 	reti
 
 BCD:
-	; save tmp and flags on stack
-	in tmp, SREG
-	push tmp
+	; save tmpL and flags on stack
+	in tmpL, SREG
+	push tmpL
 	;.. do something els
 
-	; restore tmp and flags from stack
-	pop tmp
-	out SREG, tmp
-	pop tmp
+	; restore tmpL and flags from stack
+	pop tmpL
+	out SREG, tmpL
+	pop tmpL
 	reti
