@@ -26,13 +26,13 @@ MAIN:
 
 STARTBIT:
 	sbic PINA, 0
-	jmp CHECK_VALID_START
+	call CHECK_VALID_START
 	jmp STARTBIT
 
 CHECK_VALID_START:
 	call DELAY ; T/2 delay
 	sbis PINA, 0
-	jmp MAIN
+	ret
 	jmp BIT_INIT
 	
 BIT_INIT:
