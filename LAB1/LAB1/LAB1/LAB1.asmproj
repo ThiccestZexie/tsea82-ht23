@@ -69,6 +69,7 @@
       <ToolName>JTAGICE3</ToolName>
     </com_atmel_avrdbg_tool_jtagice3plus>
     <avrtoolinterfaceclock>0</avrtoolinterfaceclock>
+    <StimuliFile>C:\Git\tsea82-2023\LAB2\stuff.stim</StimuliFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
