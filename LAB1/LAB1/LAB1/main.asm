@@ -7,40 +7,36 @@
 
 
 ; Replace with your application code
-.equ T=10
+.equ T_HALF=5
 .equ BITS=4
 
-ldi r20, 5
-ldi r24, 0x00
-out DDRA, r24
-ldi r24, 0xFF
-out DDRB, r24
+;ldi r20, 5
+ldi r18, 0x00
+out DDRA, r18
+ldi r18, 0xFF
+out DDRB, r18
 
-ldi r24, HIGH(RAMEND)
-out SPH, r24
-ldi r24, LOW(RAMEND)
-out SPL, r24
-
-MAIN:
-	jmp STARTBIT
+ldi r18, HIGH(RAMEND)
+out SPH, r18
+ldi r18, LOW(RAMEND)
+out SPL, r18
 
 STARTBIT:
 	sbic PINA, 0
-	call CHECK_VALID_START
+	jmp CHECK_VALID_START
 	jmp STARTBIT
 
 CHECK_VALID_START:
 	call DELAY ; T/2 delay
 	sbis PINA, 0
-	ret
-	jmp BIT_INIT
+	jmp STARTBIT
 	
 BIT_INIT:
-	clr r18
+	clr r18 ; used to store incoming bits
+	clr r19 ; iteration index
 BIT:
-	; T delay
 	call DELAY
-	call DELAY
+	call DELAY ; T delay
 	sbic PINA, 0
 	sbr r18, 0b10000
 	lsr r18
@@ -49,13 +45,15 @@ BIT:
 	brne BIT
 	jmp DISPLAY
 
-DISPLAY: ; OUTPUT r18 on PORTB lower (dont touch PORTB.7!)
+DISPLAY: ; OUTPUT r18 on PORTB lower
 	out PORTB, r18
-	jmp MAIN
+	call DELAY
+	call DELAY
+	jmp STARTBIT
 
 DELAY:
 	sbi PORTB,7
-	ldi r16,T ; Decimal bas
+	ldi r16,T_HALF ; Decimal bas
 delayYttreLoop:
 	ldi r17, 0x1F
 delayInreLoop:

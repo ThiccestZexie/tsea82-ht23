@@ -1,0 +1,9 @@
+
+AVRASM ver. 2.2.7  X:\Courses\tsea82-2023\LAB3\lab3\lab3\main.asm Fri Apr 28 09:14:47 2023
+
+[builtin](2): error: Cannot find include file: m16Adef.inc
+X:\Courses\tsea82-2023\LAB3\lab3\lab3\main.asm(0): '[builtin]' included form here
+X:\Courses\tsea82-2023\LAB3\lab3\lab3\main.asm(25): error: Use of undefined or forward referenced symbol 'SRAM_START' in .org
+X:\Courses\tsea82-2023\LAB3\lab3\lab3\main.asm(33): error: Use of undefined or forward referenced symbol 'INT0addr' in .org
+X:\Courses\tsea82-2023\LAB3\lab3\lab3\main.asm(35): error: Use of undefined or forward referenced symbol 'INT1addr' in .org
+X:\Courses\tsea82-2023\LAB3\lab3\lab3\main.asm(37): error: Use of undefined or forward referenced symbol 'INT_VECTORS_SIZE' in .org

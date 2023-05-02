@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.7  X:\Courses\tsea82-2023\LAB1\LAB1\LAB1\main.asm Fri Apr 28 08:57:26 2023
+AVRASM ver. 2.2.7  X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm Fri Apr 28 10:19:25 2023
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.3.300\avrasm\inc\m16adef.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.3.300\avrasm\inc\m16adef.inc'
                                  
-                                 ;
+                                 ; Ett stoppur som visar tiden passerad i minuter och sekunder.
                                  
                                  ;***** Created: 2011-02-09 12:03 ******* Source: ATmega16A.xml ***********
                                  ;*************************************************************************
@@ -870,70 +870,174 @@ AVRASM ver. 2.2.7  X:\Courses\tsea82-2023\LAB1\LAB1\LAB1\main.asm Fri Apr 28 08:
                                  #endif  /* _M16ADEF_INC_ */
                                  
                                  
-                                 ; lab1.asm
+                                 ; ---
+                                 ; IN:
+                                 ;	PD3 : 1Hz clk
+                                 ;	PD2 : önskad muxfrekv clk
+                                 ; ---
+                                 ; OUT: 
+                                 ;	PA0 : segm A
+                                 ;	PA1 : segm B
+                                 ;	...
+                                 ;	PA6 : segm G
+                                 ;	PA7 : segm DP
                                  ;
-                                 ; Created: 2023-04-11 13:48:32
-                                 ; Author : thest
-                                 ;
+                                 ;	PB0 : pos A
+                                 ;	PB1 : pos B
                                  
+                                 ; --- PREPROCESSING
+                                 .def tmp=r18
                                  
-                                 ; Replace with your application code
-                                 .equ T_HALF=5
-                                 .equ BITS=4
+                                 ; --- SRAM
+                                 .dseg
+                                 .org SRAM_START
+000060                           TIME: .byte 4 ; time in BCD-format (BCD increments this)
+000064                           POS: .byte 1 ; which digit to display (MUX increments/reads this)
                                  
-                                 ;ldi r20, 5
-000000 e020                      ldi r18, 0x00
-000001 bb2a                      out DDRA, r18
-000002 ef2f                      ldi r18, 0xFF
-000003 bb27                      out DDRB, r18
+                                 ; --- CODE
+                                 .cseg
+                                 .org $0000
+000000 940c 002f                 jmp MAIN ; RESET
+                                 .org INT0addr
+000002 940c 0044                 jmp MUX ; INT0 interr.
+                                 .org INT1addr
+000004 940c 005e                 jmp BCD ; INT1 interr.
+                                 .org INT_VECTORS_SIZE
                                  
-000004 e024                      ldi r18, HIGH(RAMEND)
-000005 bf2e                      out SPH, r18
-000006 e52f                      ldi r18, LOW(RAMEND)
-000007 bf2d                      out SPL, r18
+                                 ; --- TABLES
+                                 SEGTAB: 
+00002a 063f
+00002b 4f5b
+00002c 6d66
+00002d 077d
+00002e 6f7f                      	.db $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F
                                  
-                                 STARTBIT:
-000008 99c8                      	sbic PINA, 0
-000009 940c 000d                 	jmp CHECK_VALID_START
-00000b 940c 0008                 	jmp STARTBIT
+                                 MAIN:
+                                 MAIN_INIT:
+                                 	; I/O init
+00002f ef2f                      	ldi tmp, $FF
+000030 bb2a                      	out DDRA, tmp ; PORTA is where segments will be lit
+000031 bb27                      	out DDRB, tmp ; PORTB is where which display to use will be selected
                                  
-                                 CHECK_VALID_START:
-00000d 940e 0027                 	call DELAY ; T/2 delay
-00000f 9bc8                      	sbis PINA, 0
-000010 940c 0008                 	jmp STARTBIT
+                                 	; init SP
+000032 e024                      	ldi tmp,HIGH(RAMEND)
+000033 bf2e                      	out SPH,tmp
+000034 e52f                      	ldi tmp,LOW(RAMEND)
+000035 bf2d                      	out SPL,tmp
+                                 
+                                 	; reset data variables
+000036 e014                      	ldi r17, 4 ; do it for every byte in TIME
+                                 MAIN_INIT_TIME_RESET:
+000037 e6a0                      	ldi XL, LOW(TIME)
+000038 e0b0                      	ldi XH, HIGH(TIME)
+000039 e020                      	ldi tmp, 0x00
+00003a 932c                      	st X, tmp
+00003b 951a                      	dec r17
+00003c f7d1                      	brne MAIN_INIT_TIME_RESET
+                                 
+                                 	; should interrupt on rising edge (both ISC0 and ISC1)
+00003d e02f                      	ldi tmp,(1<<ISC01)|(1<<ISC00)|(1<<ISC11)|(1<<ISC10) ; THS MIGHT NOT OWORK ON PHYUSOCAL atmega16a
+00003e bf25                      	out MCUCR,tmp
+                                 
+                                 	; enable ISC01 and ISC1
+00003f ec20                      	ldi tmp,(1<<INT1)|(1<<INT0)
+000040 bf2b                      	out GICR,tmp
+                                 	; enable interrupts
+000041 9478                      	sei
+                                 
+                                 MAIN_WAIT:
+000042 940c 0042                 	jmp MAIN_WAIT
+                                 
+                                 ; interrupt handlers
+                                 MUX:
+                                 MUX_INIT:
+                                 	; save tmp and flags on stack
+000044 932f                      	push tmp
+000045 b72f                      	in tmp, SREG
+000046 932f                      	push tmp
+                                 
+                                 MUX_MAIN:
+                                 	; tmp loaded with POS variable
+000047 e6a4                      	ldi XL, LOW(POS)
+000048 e0b0                      	ldi XH, HIGH(POS)
+000049 912c                      	ld tmp, X
+                                 	; use POS to change which display to light up
+00004a bb28                      	out PORTB, tmp
+                                 
+                                 	; load X with TIME + POS
+00004b e6a0                      	ldi XL, LOW(TIME)
+00004c e0b0                      	ldi XH, HIGH(TIME)
+                                 	;ldi r17, 8
+                                 	;mul tmp, r17
+00004d 0fa2                      	add XL, tmp
+                                 
+                                 	; tmp loaded with actual number to display at current pos
+00004e 912c                      	ld tmp, X
+                                 
+                                 	; find how to displ sgemtns
+00004f e5e4                      	ldi ZL, LOW(SEGTAB*2)
+000050 e0f0                      	ldi ZH, HIGH(SEGTAB*2)
+000051 0fe2                      	add ZL, tmp
+                                 
+                                 	; tmp loaded with encoded segment thingy
+000052 9124                      	lpm tmp, Z
+                                 
+                                 	; light up segments!
+000053 bb2b                      	out PORTA, tmp
                                  	
-                                 BIT_INIT:
-000012 2722                      	clr r18 ; used to store incoming bits
-000013 2733                      	clr r19 ; iteration index
-                                 BIT:
-000014 940e 0027                 	call DELAY
-000016 940e 0027                 	call DELAY ; T delay
-000018 99c8                      	sbic PINA, 0
-000019 6120                      	sbr r18, 0b10000
-00001a 9526                      	lsr r18
-00001b 9533                      	inc r19
-00001c 3034                      	cpi r19, BITS
-00001d f7b1                      	brne BIT
-00001e 940c 0020                 	jmp DISPLAY
+                                 	; increment POS in SRAM memory
+000054 e6a4                      	ldi XL, LOW(POS)
+000055 e0b0                      	ldi XH, HIGH(POS)
+000056 912c                      	ld tmp, X 
+000057 9523                      	inc tmp
+000058 7023                      	andi tmp, 0b11
+000059 932c                      	st X, tmp
                                  
-                                 DISPLAY: ; OUTPUT r18 on PORTB lower
-000020 bb28                      	out PORTB, r18
-000021 940e 0027                 	call DELAY
-000023 940e 0027                 	call DELAY
-000025 940c 0008                 	jmp STARTBIT
+                                 MUX_EXIT:
+                                 	; restore tmp and flags from stack
+00005a 912f                      	pop tmp
+00005b bf2f                      	out SREG, tmp
+00005c 912f                      	pop tmp
+00005d 9518                      	reti
                                  
-                                 DELAY:
-000027 9ac7                      	sbi PORTB,7
-000028 e005                      	ldi r16,T_HALF ; Decimal bas
-                                 delayYttreLoop:
-000029 e11f                      	ldi r17, 0x1F
-                                 delayInreLoop:
-00002a 951a                      	dec r17
-00002b f7f1                      	brne delayInreLoop
-00002c 950a                      	dec r16
-00002d f7d9                      	brne delayYttreLoop
-00002e 98c7                      	cbi PORTB,7
-00002f 9508                      	ret
+                                 BCD:
+                                 BCD_INIT:
+                                 	; save tmp and flags on stack
+00005e 931f                      	push r17
+00005f 932f                      	push tmp
+000060 b72f                      	in tmp, SREG
+000061 932f                      	push tmp
+                                 	; load start of TIME variable
+000062 e6a0                      	ldi XL, LOW(TIME)
+000063 e0b0                      	ldi XH, HIGH(TIME)
+                                 
+000064 e012                      	ldi r17, 2 ; two passes in loop
+                                 BCD_LOOP:
+                                 	; load ones
+000065 912c                      	ld tmp, X
+000066 9523                      	inc tmp ; increment ones
+000067 932c                      	st X, tmp
+000068 302a                      	cpi tmp, 10 
+000069 f459                      	brne BCD_EXIT ; not 10->EXIT, else continue..
+00006a 2722                      	clr tmp
+00006b 932d                      	st X+, tmp ; reset ones, move to next position
+00006c 912c                      	ld tmp, X ; load tens
+00006d 9523                      	inc tmp ; increment tens
+00006e 932c                      	st X, tmp
+00006f 3026                      	cpi tmp, 6 ; not 6 -> EXIT, else continue
+000070 f421                      	brne BCD_EXIT
+000071 2722                      	clr tmp
+000072 932d                      	st X+, tmp ; reset tens, move to next pos
+                                 
+000073 951a                      	dec r17
+000074 f781                      	brne BCD_LOOP
+                                 BCD_EXIT:
+                                 	; restore tmp and flags from stack
+000075 912f                      	pop tmp
+000076 bf2f                      	out SREG, tmp
+000077 912f                      	pop tmp
+000078 911f                      	pop r17
+000079 9518                      	reti
 
 
 RESOURCE USE INFORMATION
@@ -951,40 +1055,40 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega16A" register use summary:
-x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+x  :  11 y  :   0 z  :   1 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:   2 r17:   2 r18:  12 r19:   3 r20:   0 
-r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
-r29:   0 r30:   0 r31:   0 
-Registers used: 4 out of 35 (11.4%)
+r13:   0 r14:   0 r15:   0 r16:   0 r17:   6 r18:  48 r19:   0 r20:   0 
+r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   6 r27:   5 r28:   0 
+r29:   0 r30:   2 r31:   1 
+Registers used: 8 out of 35 (22.9%)
 
 "ATmega16A" instruction use summary:
-.lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
-andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
+.lds  :   0 .sts  :   0 adc   :   0 add   :   2 adiw  :   0 and   :   0 
+andi  :   1 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
 brcc  :   0 brcs  :   0 break :   0 breq  :   0 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
-brne  :   3 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
-brvs  :   0 bset  :   0 bst   :   0 call  :   5 cbi   :   1 cbr   :   0 
+brne  :   4 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
 clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   2 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   1 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
-fmulsu:   0 icall :   0 ijmp  :   0 in    :   0 inc   :   1 jmp   :   5 
-ld    :   0 ldd   :   0 ldi   :   6 lds   :   0 lpm   :   0 lsl   :   0 
-lsr   :   1 mov   :   0 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
-neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :   5 pop   :   0 
-push  :   0 rcall :   0 ret   :   1 reti  :   0 rjmp  :   0 rol   :   0 
-ror   :   0 sbc   :   0 sbci  :   0 sbi   :   1 sbic  :   2 sbis  :   1 
-sbiw  :   0 sbr   :   1 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
-sei   :   0 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
-sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   0 
+cpi   :   2 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
+fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   3 jmp   :   4 
+ld    :   5 ldd   :   0 ldi   :  20 lds   :   0 lpm   :   2 lsl   :   0 
+lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
+neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  10 pop   :   5 
+push  :   5 rcall :   0 ret   :   0 reti  :   2 rjmp  :   0 rol   :   0 
+ror   :   0 sbc   :   0 sbci  :   0 sbi   :   0 sbic  :   0 sbis  :   0 
+sbiw  :   0 sbr   :   0 sbrc  :   0 sbrs  :   0 sec   :   0 seh   :   0 
+sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
+sez   :   0 sleep :   0 spm   :   0 st    :   6 std   :   0 sts   :   0 
 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
-Instructions used: 16 out of 113 (14.2%)
+Instructions used: 18 out of 113 (15.9%)
 
 "ATmega16A" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000060     96      0     96   16384   0.6%
-[.dseg] 0x000060 0x000060      0      0      0    1024   0.0%
+[.cseg] 0x000000 0x0000f4    162     10    172   16384   1.0%
+[.dseg] 0x000060 0x000065      0      5      5    1024   0.5%
 [.eseg] 0x000000 0x000000      0      0      0     512   0.0%
 
 Assembly complete, 0 errors, 0 warnings
