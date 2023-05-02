@@ -29,7 +29,7 @@
   <BCD><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>128</LINE></BCD>
   <SEGTAB><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>37</LINE></SEGTAB>
   <MAIN_INIT><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>41</LINE></MAIN_INIT>
-  <MAIN_INIT_TIME_RESET><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>55</LINE></MAIN_INIT_TIME_RESET>
+  <MAIN_INIT_LOOP><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>58</LINE></MAIN_INIT_LOOP>
   <MAIN_WAIT><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>73</LINE></MAIN_WAIT>
   <MUX_INIT><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>78</LINE></MUX_INIT>
   <MUX_MAIN><FILE>X:\Courses\tsea82-2023\LAB3\lab3 v2\lab3 v2\main.asm</FILE><LINE>84</LINE></MUX_MAIN>

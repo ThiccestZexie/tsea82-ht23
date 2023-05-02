@@ -44,21 +44,24 @@ MAIN_INIT:
 	out DDRA, tmp ; PORTA is where segments will be lit
 	out DDRB, tmp ; PORTB is where which display to use will be selected
 
+	clr tmp
+	out DDRD, tmp
+
 	; init SP
 	ldi tmp,HIGH(RAMEND)
 	out SPH,tmp
 	ldi tmp,LOW(RAMEND)
 	out SPL,tmp
 
-	; reset data variables
-	ldi r17, 4 ; do it for every byte in TIME
-MAIN_INIT_TIME_RESET:
+	; clear TIME in SRAM
+	ldi r17, 4 ; 4 bytes to clear
+	clr tmp ; PUT ZEROES
 	ldi XL, LOW(TIME)
 	ldi XH, HIGH(TIME)
-	ldi tmp, 0x00
-	st X, tmp
+MAIN_INIT_LOOP:
+	st X+, tmp ; clear the current byte
 	dec r17
-	brne MAIN_INIT_TIME_RESET
+	brne MAIN_INIT_LOOP
 
 	; should interrupt on rising edge (both ISC0 and ISC1)
 	ldi tmp,(1<<ISC01)|(1<<ISC00)|(1<<ISC11)|(1<<ISC10) ; THS MIGHT NOT OWORK ON PHYUSOCAL atmega16a
@@ -80,7 +83,8 @@ MUX_INIT:
 	push tmp
 	in tmp, SREG
 	push tmp
-
+	push XL
+	push XH
 MUX_MAIN:
 	; tmp loaded with POS variable
 	ldi XL, LOW(POS)
@@ -120,6 +124,8 @@ MUX_MAIN:
 
 MUX_EXIT:
 	; restore tmp and flags from stack
+	pop XH
+	pop XL
 	pop tmp
 	out SREG, tmp
 	pop tmp
@@ -132,6 +138,8 @@ BCD_INIT:
 	push tmp
 	in tmp, SREG
 	push tmp
+	push XL
+	push XH
 	; load start of TIME variable
 	ldi XL, LOW(TIME)
 	ldi XH, HIGH(TIME)
@@ -158,6 +166,8 @@ BCD_LOOP:
 	brne BCD_LOOP
 BCD_EXIT:
 	; restore tmp and flags from stack
+	pop XH
+	pop XL
 	pop tmp
 	out SREG, tmp
 	pop tmp
