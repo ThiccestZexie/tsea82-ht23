@@ -44,9 +44,13 @@ SEED:	.byte	1		; Seed for Random
 	.org	INT0addr
 	jmp	MUX
 
-
 START:
-	***			; sätt stackpekaren
+	; init SP
+	ldi r16, HIGH(RAMEND)
+	out SPH, r16
+	ldi r16, LOW(RAMEND)
+	out SPL, r16
+
 	call	HW_INIT	
 	call	WARM
 RUN:
@@ -161,12 +165,6 @@ HW_INIT:
 *** 	Konfigurera hårdvara och MUX-avbrott enligt ***
 *** 	ditt elektriska schema. Konfigurera 		***
 *** 	flanktriggat avbrott på INT0 (PD2).			***
-
-	; init SP
-	ldi tmp,HIGH(RAMEND)
-	out SPH,tmp
-	ldi tmp,LOW(RAMEND)
-	out SPL,tmp
 
 	; should interrupt on rising edge (both ISC0 and ISC1)
 	ldi tmp,(1<<ISC01)|(1<<ISC00)|(1<<ISC11)|(1<<ISC10) ; THS MIGHT NOT OWORK ON PHYUSOCAL atmega16a
