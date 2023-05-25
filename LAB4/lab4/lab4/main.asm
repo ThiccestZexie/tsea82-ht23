@@ -35,13 +35,23 @@ SEED:	.byte	1		; Seed for Random
 		dec	r16
 		sts	@0,r16
 	.endmacro
+
+	; -- Macro for storing immediate to SRAM
+	; -- @0 : POINTER
+	; -- @1 : IMMEDIATE VALUE TO STORE
+	.macro STI
+		push r16
+		ldi r16, @1
+		st @0, r16
+		pop r16
+	.endmacro
  
 	; ---------------------------------------
 	; --- Code
 	.cseg
-	.org 	$0
+	.org $0
 	jmp	START
-	.org	INT0addr
+	.org INT0addr
 	jmp	MUX
 
 START:
@@ -58,9 +68,9 @@ RUN:
 	call	ERASE_VMEM
 	call	UPDATE
 
-*** 	Vänta en stund så inte spelet går för fort 	***
+;;*** 	Vänta en stund så inte spelet går för fort 	;***
 	
-*** 	Avgör om träff				 	***
+;;*** 	Avgör om träff				 	;***
 
 	brne	NO_HIT	
 	ldi		r16,BEEP_LENGTH
@@ -73,8 +83,8 @@ NO_HIT:
 	; --- Multiplex display
 MUX:	
 
-*** 	skriv rutin som handhar multiplexningen och ***
-*** 	utskriften till diodmatrisen. Öka SEED.		***
+;;*** 	skriv rutin som handhar multiplexningen och ;***
+;;*** 	utskriften till diodmatrisen. Öka SEED.		;***
 
 	reti
 		
@@ -83,10 +93,10 @@ MUX:
 	; --- Uses r16
 JOYSTICK:	
 
-*** 	skriv kod som ökar eller minskar POSX beroende 	***
-*** 	på insignalen från A/D-omvandlaren i X-led...	***
+;*** 	skriv kod som ökar eller minskar POSX beroende 	;***
+;*** 	på insignalen från A/D-omvandlaren i X-led...	;***
 
-*** 	...och samma för Y-led 				***
+;*** 	...och samma för Y-led 				;***
 
 JOY_LIM:
 	call	LIMITS		; don't fall off world!
@@ -162,34 +172,44 @@ SETBIT_END:
 	; --- Uses r16
 HW_INIT:
 
-*** 	Konfigurera hårdvara och MUX-avbrott enligt ***
-*** 	ditt elektriska schema. Konfigurera 		***
-*** 	flanktriggat avbrott på INT0 (PD2).			***
+;*** 	Konfigurera hårdvara och MUX-avbrott enligt ;***
+;*** 	ditt elektriska schema. Konfigurera 		;***
+;*** 	flanktriggat avbrott på INT0 (PD2).			;***
 
 	; should interrupt on rising edge (both ISC0 and ISC1)
-	ldi tmp,(1<<ISC01)|(1<<ISC00)|(1<<ISC11)|(1<<ISC10) ; THS MIGHT NOT OWORK ON PHYUSOCAL atmega16a
-	out MCUCR,tmp
+	ldi r16,(1<<ISC01)|(1<<ISC00)|(1<<ISC11)|(1<<ISC10)
+	out MCUCR,r16
 
 	; enable ISC01 and ISC1
-	ldi tmp,(1<<INT1)|(1<<INT0)
-	out GICR,tmp
+	ldi r16,(1<<INT1)|(1<<INT0)
+	out GICR, r16
 	; enable interrupts
-	sei ; display on
+	sei
 	ret
 
 	; ---------------------------------------
 	; --- WARM start. Set up a new game
 WARM:
+	push r16
 
-*** 	Sätt startposition (POSX,POSY)=(0,2)		***
+	; -- Init POSX, POSY = (0,2)
+	ldi r16, 0
+	sts POSX, 0 ; gör POSX=0
+	ldi r16, 2
+	sts POSY, r16 ; gör POSY=2
 
+	; -- Init TPOSX, TPOSY to random
 	push	r0		
 	push	r0		
-	call	RANDOM		; RANDOM returns x,y on stack
-
-*** 	Sätt startposition (TPOSX,POSY)				***
+	call	RANDOM ; RANDOM returns x,y on stack
+	pop r16 
+	sts TPOSX, r16 ; random TPOSX stored in SRAM!
+	pop r16
+	sts TPOSY, r16 ; random TPOSY stored in SRAM! 
 
 	call	ERASE_VMEM
+WARM_EXIT:
+	pop r16
 	ret
 
 	; ---------------------------------------
@@ -203,17 +223,18 @@ WARM:
 	; ---	pop TPOSY
 	; --- Uses r16
 RANDOM:
+	; Z same as stackpointer
 	in		r16,SPH
 	mov		ZH,r16
 	in		r16,SPL
 	mov		ZL,r16
 	lds		r16,SEED
 	
-*** 	Använd SEED för att beräkna TPOSX		***
-*** 	Använd SEED för att beräkna TPOSY		***
+;*** 	Använd SEED för att beräkna TPOSX		;***
+;*** 	Använd SEED för att beräkna TPOSY		;***
 
-	***		; store TPOSX	2..6
-	***		; store TPOSY   0..4
+	;***		; store TPOSX	2..6
+	;***		; store TPOSY   0..4
 	ret
 
 
@@ -222,16 +243,24 @@ RANDOM:
 	; --- Clears VMEM..VMEM+4
 	
 ERASE_VMEM:
-
-*** 	Radera videominnet						***
-
+	push r16
+	ldi XL, LOW(VMEM) ; X pointing to 0th byte in VMEM
+	ldi XH, HIGH(VMEM)
+	ldi r16, 5 ; loop 5 times
+ERASE_VMEM_LOOP:
+	push r16
+	sti X+, 0 ; clear byte
+	dec r16
+	brne ERASE_VMEM_LOOP
+ERASE_VMEM_EXIT:
+	pop r16
 	ret
 
 	; ---------------------------------------
 	; --- BEEP(r16) r16 half cycles of BEEP-PITCH
 BEEP:	
 
-*** skriv kod för ett ljud som ska markera träff 	***
+;*** skriv kod för ett ljud som ska markera träff 	;***
 
 	ret
 
