@@ -1,0 +1,64 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.2.8</VERSION>
+ <DEVICE>"ATmega16A"</DEVICE>
+ <WORKING_DIR>C:\Git\tsea82-2023\LAB4\lab4\lab4\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc</DIR>
+  <DIR>C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m16Adef.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\Debug\lab4.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>lab4.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>lab4.map</FILE>
+  <FILE>lab4.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <POSX><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>19</LINE></POSX>
+  <POSY><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>20</LINE></POSY>
+  <TPOSX><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>21</LINE></TPOSX>
+  <TPOSY><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>22</LINE></TPOSY>
+  <LINE><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>23</LINE></LINE>
+  <VMEM><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>24</LINE></VMEM>
+  <SEED><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>25</LINE></SEED>
+  <START><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>51</LINE></START>
+  <MUX><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>78</LINE></MUX>
+  <HW_INIT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>182</LINE></HW_INIT>
+  <WARM><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>201</LINE></WARM>
+  <RUN><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>60</LINE></RUN>
+  <JOYSTICK><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>92</LINE></JOYSTICK>
+  <ERASE_VMEM><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>254</LINE></ERASE_VMEM>
+  <UPDATE><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>143</LINE></UPDATE>
+  <NO_HIT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>73</LINE></NO_HIT>
+  <BEEP><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>271</LINE></BEEP>
+  <JOYSTICK_MOVE_RIGHT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>104</LINE></JOYSTICK_MOVE_RIGHT>
+  <JOYSTICK_MOVE_LEFT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>108</LINE></JOYSTICK_MOVE_LEFT>
+  <JOY_LIM><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>110</LINE></JOY_LIM>
+  <LIMITS><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>117</LINE></LIMITS>
+  <POS_LIM><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>128</LINE></POS_LIM>
+  <POS_LESS><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>134</LINE></POS_LESS>
+  <POS_OK><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>136</LINE></POS_OK>
+  <SETPOS><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>156</LINE></SETPOS>
+  <SETBIT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>169</LINE></SETBIT>
+  <SETBIT_LOOP><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>171</LINE></SETBIT_LOOP>
+  <SETBIT_END><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>176</LINE></SETBIT_END>
+  <RANDOM><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>234</LINE></RANDOM>
+  <WARM_EXIT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>220</LINE></WARM_EXIT>
+  <ERASE_VMEM_LOOP><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>259</LINE></ERASE_VMEM_LOOP>
+  <ERASE_VMEM_EXIT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>265</LINE></ERASE_VMEM_EXIT>
+  <DELAY><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>277</LINE></DELAY>
+  <delayYttreLoop><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>280</LINE></delayYttreLoop>
+  <delayInreLoop><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>282</LINE></delayInreLoop>
+  <ADC8><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>291</LINE></ADC8>
+  <ADC8_CONVERT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>297</LINE></ADC8_CONVERT>
+  <ADC8_WAIT><FILE>C:\Git\tsea82-2023\LAB4\lab4\lab4\main.asm</FILE><LINE>301</LINE></ADC8_WAIT>
+ </LABELS>
+</ASSEMBLER_INFO>
