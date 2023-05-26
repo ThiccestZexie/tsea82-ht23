@@ -1,5 +1,8 @@
 	
 	; --- lab4spel.asm
+; PA0 - joy X-led
+; PA1 - joy Y-led
+
 
 	.equ	VMEM_SZ     = 5		; #rows on display
 	.equ	AD_CHAN_X   = 0		; ADC0=PA0, PORTA bit 0 X-led
@@ -36,15 +39,6 @@ SEED:	.byte	1		; Seed for Random
 		sts	@0,r16
 	.endmacro
 
-	; -- Macro for storing immediate to SRAM
-	; -- @0 : POINTER
-	; -- @1 : IMMEDIATE VALUE TO STORE
-	.macro STI
-		push r16
-		ldi r16, @1
-		st @0, r16
-		pop r16
-	.endmacro
  
 	; ---------------------------------------
 	; --- Code
@@ -61,17 +55,17 @@ START:
 	ldi r16, LOW(RAMEND)
 	out SPL, r16
 
+	ldi r16, 0
+	sts LINE, r16 ; clear current line
+
 	call	HW_INIT	
 	call	WARM
 RUN:
 	call	JOYSTICK
 	call	ERASE_VMEM
 	call	UPDATE
-
-;;*** 	Vänta en stund så inte spelet går för fort 	;***
-	
-;;*** 	Avgör om träff				 	;***
-
+	call DELAY
+	call CHECK_HIT ; Sätter Z om HIT!
 	brne	NO_HIT	
 	ldi		r16,BEEP_LENGTH
 	call	BEEP
@@ -82,22 +76,71 @@ NO_HIT:
 	; ---------------------------------------
 	; --- Multiplex display
 MUX:	
-
 ;;*** 	skriv rutin som handhar multiplexningen och ;***
 ;;*** 	utskriften till diodmatrisen. Öka SEED.		;***
+	push r16
+	in r16, SREG
+	push r16
 
+	ldi XL, LOW(VMEM)
+	ldi XH, HIGH(VMEM)
+	lds r16, LINE
+	out PORTC, r16 
+	add XL, r16 ; index VMEM using line
+	; X now points to correct VMEM line in SRAM
+	ld r16, X
+	out PORTB, r16 ; ASSUMES PORTB IS OUT 
+
+	incsram SEED
+
+	pop r16
+	out SREG, r16
+	pop r16
 	reti
 		
 	; ---------------------------------------
 	; --- JOYSTICK Sense stick and update POSX, POSY
 	; --- Uses r16
-JOYSTICK:	
-
+JOYSTICK:
+    push r16
+	;x-axis	
+	cpi r17, 0b00000000
+	breq JOYSTICK_MOVE_RIGHT
+	cpi r17, 0b11000000
+	breq JOYSTICK_MOVE_LEFT
+	;y-axis
+	JOYSTICK_Y:
+	cpi r18, 0b11000000
+	breq JOYSTICK_MOVE_UP
+	cpi r18, 0b00000000
+	breq JOYSTICK_MOVE_DOWN
+	JOYSTICK_EXIT:
+	pop r16
+	ret
 ;*** 	skriv kod som ökar eller minskar POSX beroende 	;***
 ;*** 	på insignalen från A/D-omvandlaren i X-led...	;***
 
 ;*** 	...och samma för Y-led 				;***
-
+JOYSTICK_MOVE_RIGHT:
+	lds r16, POSX
+	dec r16
+	sts POSX, r16
+	jmp JOYSTICK_Y
+JOYSTICK_MOVE_LEFT:
+	lds r16, POSX
+	inc r16
+	sts POSX, r16
+	jmp JOYSTICK_Y
+JOYSTICK_MOVE_UP:
+	lds r16, POSY
+	inc r16
+	sts POSY, r16
+	jmp JOYSTICK_EXITS
+JOYSTICK_MOVE_DOWN:
+	lds r16, POSY
+	dec r16
+	sts POSY, r16
+	jmp JOYSTICK_EXIT
 JOY_LIM:
 	call	LIMITS		; don't fall off world!
 	ret
@@ -184,7 +227,7 @@ HW_INIT:
 	ldi r16,(1<<INT1)|(1<<INT0)
 	out GICR, r16
 	; enable interrupts
-	sei
+	sei		
 	ret
 
 	; ---------------------------------------
@@ -194,7 +237,7 @@ WARM:
 
 	; -- Init POSX, POSY = (0,2)
 	ldi r16, 0
-	sts POSX, 0 ; gör POSX=0
+	sts POSX, r16 ; gör POSX=0
 	ldi r16, 2
 	sts POSY, r16 ; gör POSY=2
 
@@ -246,10 +289,10 @@ ERASE_VMEM:
 	push r16
 	ldi XL, LOW(VMEM) ; X pointing to 0th byte in VMEM
 	ldi XH, HIGH(VMEM)
-	ldi r16, 5 ; loop 5 times
+	ldi r16, VMEM_SZ ; loop 5 times
 ERASE_VMEM_LOOP:
-	push r16
-	sti X+, 0 ; clear byte
+	ldi r16, 0
+	st X+, r16 ; clear byte
 	dec r16
 	brne ERASE_VMEM_LOOP
 ERASE_VMEM_EXIT:
@@ -258,10 +301,77 @@ ERASE_VMEM_EXIT:
 
 	; ---------------------------------------
 	; --- BEEP(r16) r16 half cycles of BEEP-PITCH
-BEEP:	
-
-;*** skriv kod för ett ljud som ska markera träff 	;***
-
+CHECK_HIT:
+	push r16
+	push r17
+	lds r16, TPOSX
+	lds r17, POSX
+	cp r16,r17
+	brne CHECK_EXIT
+	lds r16, TPOSY
+	lds r17, POSY
+	cp r16, r17
+	brne CHECK_EXIT
+	; win
+	sez
+CHECK_EXIT:	
+	pop r17
+	pop r16
 	ret
 
-			
+; r16 holds the length
+BEEP:
+	push r17
+	push r18
+	ldi r18, BEEP_LENGTH
+BEEP_LOOP:
+	ldi r17, 0x01
+	out PORTC, r17
+	call DELAY
+	ldi r17, 0x00
+	out PORTC, r17
+	call DELAY
+	dec r18
+	brne BEEP_LOOP
+BEEP_DONE:
+	pop r18
+	pop r17
+	ret
+		
+; delays for r16 milliseconds	
+DELAY:
+	push r17
+	push r16
+    sbi PORTB,7
+    ;ldi r16,10 ; antal 
+delayYttreLoop:
+    ldi r17, 0x1F
+delayInreLoop:
+    dec r17
+    brne delayInreLoop
+    dec r16
+    brne delayYttreLoop
+    cbi PORTB,7
+	pop r16
+	pop r17
+    ret
+
+; AD found in r16 after this
+ADC8:
+	ldi r16, (1<<REFS0)|(1<<ADLAR)
+	out ADMUX, r16
+	ldi r16, (1<<ADEN)
+	ori r16, (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)
+	out ADCSRA, r16
+ADC8_CONVERT:
+	in r16, ADCSRA
+	ori r16, (1<<ADSC)
+	out ADCSRA,r16
+ADC8_WAIT:
+	in r16, ADCSRA
+	sbrc r16, ADSC
+	rjmp ADC8_WAIT
+	in r16, ADCH
+	mov r17, r16
+	andi r17, 0xC0 ; WORRY about it later 
+	swap r17
